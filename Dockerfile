@@ -9,7 +9,7 @@ FROM node:10.6.0-slim
 
 WORKDIR /usr/local/water-monitor
 
-COPY --from=0 node_modules/ .
+COPY --from=0 node_modules/ node_modules
 COPY --from=0 package.json .
 
 COPY config config
