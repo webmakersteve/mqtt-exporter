@@ -1,0 +1,68 @@
+version: '3.2'
+services:
+  application:
+    build: mqtt-exporter
+    depends_on:
+      - prometheus
+      - emq20
+    deploy:
+      replicas: 1
+    ports:
+      - '8080:8080'
+    restart: always
+    environment:
+      MQTT_CONNECTION_STRING: mqtt://emq20
+  prometheus:
+    image: prom/prometheus
+    deploy:
+      replicas: 1
+    environment: []
+    ports:
+      - '9090:9090'
+    volumes:
+      - './prometheus.yaml:/etc/prometheus/prometheus.yml'
+  grafana:
+    image: grafana/grafana
+    deploy:
+      replicas: 1
+    depends_on:
+      - mysql
+    environment:
+      GF_DATABASE_TYPE: mysql
+      GF_DATABASE_HOST: mysql:3306
+      GF_DATABASE_USER: root
+      GF_DATABASE_PASSWORD: password
+      GF_SESSION_PROVIDER: mysql
+      GF_AUTH_ANONYMOUS_ENABLED: 'true'
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: 'false'
+      GF_AUTH_DISABLE_SIGNOUT_MENU: 'true'
+      GF_SESSION_PROVIDER_CONFIG: 'root:password@tcp(mysql:3306)/grafana'
+    ports:
+      - '3000:3000'
+  mysql:
+    image: mysql
+    deploy:
+      replicas: 1
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: grafana
+    ports:
+      - '3306'
+    volumes:
+      - type: volume
+        source: mysqldata
+        target: '/var/lib/mysql'
+  emq20:
+    image: emqx-docker-v3.0-beta.4
+    deploy:
+      replicas: 1
+    ports:
+      - '1883:1883'
+      - '8083:8083'
+      - '8883:8883'
+      - '8084:8084'
+      - '18083:18083'
+volumes:
+  mysqldata:
